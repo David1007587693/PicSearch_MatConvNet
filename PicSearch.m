@@ -100,8 +100,10 @@ set(handles.text1,'String',str);
 drawnow;
 delete('./database/*') 
 copyfile(db,'./database')
-net = load('./res/imagenet-vgg-f');
 run ./matconvnet-1.0-beta25/matlab/vl_setupnn
+net = load('./res/imagenet-vgg');
+net=vl_simplenn_tidy(net);
+
 path_imgDB = './database/';
 addpath(path_imgDB);
 addpath tools;
@@ -119,6 +121,7 @@ set(handles.text1,'String',str);
 drawnow;
 feat = []; %创建向量feat
 rgbImgList = {}; %创建数组rgbImgList
+[a,layersnum]=size(net.layers);
 
 %parpool;
 
@@ -128,11 +131,13 @@ for i = 1:numImg  %1到图片数量numImg
    if size(oriImg, 3) == 3 %判断图片是否为真彩图,3真彩图.1索引图
        im_ = single(oriImg) ; % note: 255 range，转为单精度，必须为single或者double
        im_ = imresize(im_, net.meta.normalization.imageSize(1:2)) ;%大小设置为224*224
-       im_ = im_ - net.meta.normalization.averageImage ; %减去平均值？？？？
+       %imshow(im_);
+       %im_ = im_-net.meta.normalization.averageImage ; %减去平均值？？？？
+       %imshow(im_);
        res = vl_simplenn(net, im_) ;%evaluates the convnet NET on data X
        
        % viesion: matconvnet-1.0-beta17
-       featVec = res(20).x;%19-layer的输出值,res(20).x
+       featVec = res(layersnum).x;%19-layer的输出值,res(20).x
        
        featVec = featVec(:); % 将featVec中的值变为一列，矩阵转换为向量
        feat = [feat; featVec'];%feat为空，featVec转置
@@ -175,21 +180,23 @@ function pushbutton2_Callback(hObject, eventdata, handles)
    imshow(M);
    drawnow
    copyfile(pathfile,'.\database\0.jpg')
-%run ./matconvnet-1.0-beta25/matlab/vl_setupnn
+run ./matconvnet-1.0-beta25/matlab/vl_setupnn
 %加载图片数据库
 db = './database/';%图片数据存入database文件夹
 addpath(db);
-%addpath tools;
+addpath tools;
 %加载预训练的模型
-net = load('./res/imagenet-vgg-f');
+net = load('./res/imagenet-vgg');
+net=vl_simplenn_tidy(net);
 load ./res/0.mat
+[a,layersnum]=size(net.layers);
 %读取需要查询图片
 
    M= single(M);
    M = imresize(M, net.meta.normalization.imageSize(1:2)) ;%大小设置为224*224
-   M = M - net.meta.normalization.averageImage ; %减去平均值
+   %M = M - net.meta.normalization.averageImage ; %减去平均值
    res = vl_simplenn(net, M) ;
-   MVec = res(20).x
+   MVec = res(layersnum).x
    MVec = MVec(:)
    VEC = []; 
    VEC = [VEC; MVec'];
@@ -290,7 +297,7 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton5 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-run help;
+run MatVideo;
 
 % --- Executes on button press in pushbutton6.
 function pushbutton6_Callback(hObject, eventdata, handles)
